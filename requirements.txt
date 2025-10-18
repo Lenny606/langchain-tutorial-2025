@@ -2,3 +2,6 @@ langchain-core
 langchain-openai
 langchain-community
 python-dotenv
+scikit-image
+pydantic
+matplotlib

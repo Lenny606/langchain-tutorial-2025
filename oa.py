@@ -1,12 +1,17 @@
 import os
 from getpass import getpass
+from skimage import io
+import matplotlib.pyplot as plt
 from Paragraph import Paragraph
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_core.runnables import RunnableLambda
+from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
-    ChatPromptTemplate
+    ChatPromptTemplate,
+    PromptTemplate
 )
 
 load_dotenv()
@@ -87,3 +92,35 @@ chain_three = (
 response_three = chain_three.invoke({
     "seo_keywords": response_two["seo_keywords"]
 })
+
+# image generation but first generate prompt for this image
+
+image_prompt = PromptTemplate(
+    input_variables=["seo_keywords"],
+    template="Generate a prompt for an image of {seo_keywords} topic. less then 500 characters  "
+)
+
+
+def generate_and_show_image(image_prompt):
+    image_url = DallEAPIWrapper().run(image_prompt)
+    image_data = io.imread(image_url)
+
+    plt.imshow(image_data)
+    plt.axis('off')
+    plt.show()
+
+
+# wrap function in RunnableLambda
+generate_image_runnable = RunnableLambda(generate_and_show_image)
+
+# 4 chain
+chain_four = (
+    {
+        "seo_keywords": lambda x: x["seo_keywords"]
+    }
+    | image_prompt
+    | llm
+    | (lambda x: x.content)
+    | generate_image_runnable
+)
+chain_four.invoke({"seo_keywords": response_two["seo_keywords"]})
