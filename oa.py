@@ -1,5 +1,6 @@
 import os
 from getpass import getpass
+from Paragraph import Paragraph
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import (
@@ -44,19 +45,45 @@ response_one = chain_one.invoke({
 
 # --- second chain ---
 system_prompt = SystemMessagePromptTemplate.from_template("You are SEO specialist")
-second_user_prompt = HumanMessagePromptTemplate.from_template("Analyze {output_key} and create SEO keywords for this topic", input_variables=["output_key"])
+second_user_prompt = HumanMessagePromptTemplate.from_template(
+    "Analyze {output_key} and create SEO keywords for this topic", input_variables=["output_key"])
 
 second_chat_prompt = ChatPromptTemplate.from_messages([system_prompt, second_user_prompt])
 
 chain_two = (
-    {
-        "output_key": lambda x: x["output_key"]
-    }
-    | second_chat_prompt
-    | llm
-    | {"seo_keywords": lambda x: x.content}
+        {
+            "output_key": lambda x: x["output_key"]
+        }
+        | second_chat_prompt
+        | llm
+        | {"seo_keywords": lambda x: x.content}
 )
 response_two = chain_two.invoke({
     "output_key": response_one["output_key"],
- })
+})
 
+# chain 3 -> Structured Output forces LLM to return structured data
+structured_llm = llm.with_structured_output(Paragraph)
+
+third_system_prompt = SystemMessagePromptTemplate.from_template("You are data analyst")
+third_user_prompt = HumanMessagePromptTemplate.from_template(
+    "Based on SEO keywords {seo_keywords}, create structured summary", input_variables=["seo_keywords"])
+
+third_chat_prompt = ChatPromptTemplate.from_messages([third_system_prompt, third_user_prompt])
+
+chain_three = (
+        {
+            "seo_keywords": lambda x: x["seo_keywords"]
+        }
+        | third_chat_prompt
+        | structured_llm
+        | {
+            "original_paragraph": lambda x: x.original_paragraph,
+            "edited_paragraph": lambda x: x.edited_paragraph,
+            "feedback": lambda x: x.feedback,
+        }
+)
+
+response_three = chain_three.invoke({
+    "seo_keywords": response_two["seo_keywords"]
+})
