@@ -107,7 +107,14 @@ def generate_and_show_image(image_prompt):
 
     plt.imshow(image_data)
     plt.axis('off')
-    plt.show()
+    backend = plt.get_backend().lower()
+    if 'agg' in backend or 'noninteractive' in backend:
+        output_path = os.path.join(os.path.dirname(__file__), os.getenv('OUTPUT_IMAGE_PATH', 'images/'))
+        plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+        print(f"Image saved to {output_path} (backend: {backend}); cannot display interactively.")
+    else:
+        plt.show()
 
 
 # wrap function in RunnableLambda
