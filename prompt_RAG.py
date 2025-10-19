@@ -104,3 +104,27 @@ prompt_template_new = ChatPromptTemplate.from_messages([
 pipeline_new = prompt_template_new | llm
 # res = pipeline_new.invoke({"context": context, "query": query}).content
 # print(res)
+
+# CHAIN OF THOUGHTS - active as deafault, to ,,turn off,, need to set system propt
+no_cot_system_prompt = "Answer the question directly, no explanation. If you don't know the answer, just say that you don't know."
+
+no_cot_prompt_template = ChatPromptTemplate.from_messages([
+    ('system', no_cot_system_prompt),
+    ('user', "{query}")
+])
+
+no_cot_query = "what is result 2 * 2 * 5 - 6 - 8 - 6 * 5"
+
+no_cot_pipeline = no_cot_prompt_template | llm
+# no_cot_result = no_cot_pipeline.invoke({"query": no_cot_query}).content
+# print(no_cot_result)
+
+cot_s_template = "Answer systematicaly in detail, solve each sub problem, use everthing in the end for response"
+cot_query = "what is result 2 * 2 * 5 - 6 - 8 - 6 * 5"
+cot_prompt_template = ChatPromptTemplate.from_messages([
+    ('system', cot_s_template),
+    ('user', "{query}")
+])
+cot_pipeline = cot_prompt_template | llm
+# cot_result = cot_pipeline.invoke({"query": cot_query}).content
+# print(cot_result)
